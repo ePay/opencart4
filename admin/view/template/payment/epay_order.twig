@@ -1,0 +1,148 @@
+<div id="epay-epic-order">
+  <div id="epay-epic-alert"></div>
+
+  {% if transaction_id %}
+    <table class="table table-bordered">
+      <tbody>
+        <tr>
+          <td>{{ text_transaction_id }}</td>
+          <td>{{ transaction_id }}</td>
+        </tr>
+        <tr>
+          <td>{{ text_transaction_state }}</td>
+          <td>{{ transaction_state }}</td>
+        </tr>
+        <tr>
+          <td>{{ text_transaction_amount }}</td>
+          <td>{{ transaction_amount }}</td>
+        </tr>
+        <tr>
+          <td>{{ text_transaction_captured }}</td>
+          <td>{{ transaction_captured }}</td>
+        </tr>
+        <tr>
+          <td>{{ text_transaction_refunded }}</td>
+          <td>{{ transaction_refunded }}</td>
+        </tr>
+        <tr>
+          <td>{{ text_transaction_voided }}</td>
+          <td>{{ transaction_voided }}</td>
+        </tr>
+        {% if transaction_updated %}
+          <tr>
+            <td>{{ text_transaction_updated }}</td>
+            <td>{{ transaction_updated }}</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+
+    <div class="card mb-3">
+      <div class="card-header">{{ text_capture }}</div>
+      <div class="card-body">
+        <div class="row mb-3">
+          <label for="input-epay-capture-amount" class="col-sm-3 col-form-label">{{ text_amount }}</label>
+          <div class="col-sm-9">
+            <input type="text" id="input-epay-capture-amount" class="form-control" value="{{ capture_amount }}"/>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <label class="col-sm-3 col-form-label">{{ text_void_remaining }}</label>
+          <div class="col-sm-9">
+            <div class="form-check form-switch form-switch-lg">
+              <input type="checkbox" id="input-epay-capture-void-remaining" class="form-check-input"/>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="btn btn-primary" id="button-epay-capture">{{ text_capture }}</button>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header">{{ text_refund }}</div>
+      <div class="card-body">
+        <div class="row mb-3">
+          <label for="input-epay-refund-amount" class="col-sm-3 col-form-label">{{ text_amount }}</label>
+          <div class="col-sm-9">
+            <input type="text" id="input-epay-refund-amount" class="form-control" value="{{ refund_amount }}"/>
+          </div>
+        </div>
+        <button type="button" class="btn btn-warning" id="button-epay-refund">{{ text_refund }}</button>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header">{{ text_void }}</div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">{{ text_void_remaining }}</p>
+        <button type="button" class="btn btn-danger" id="button-epay-void">{{ text_void }}</button>
+      </div>
+    </div>
+  {% else %}
+    <div class="alert alert-info">{{ text_no_transaction }}</div>
+  {% endif %}
+</div>
+
+<script type="text/javascript"><!--
+(function() {
+  function showAlert(type, message) {
+    $('#epay-epic-alert').html(
+      '<div class="alert alert-' + type + ' alert-dismissible">' +
+        '<i class="fa-solid fa-circle-exclamation"></i> ' + message +
+        ' <button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+      '</div>'
+    );
+  }
+
+  function postAction(url, data, button) {
+    $.ajax({
+      url: url,
+      type: 'post',
+      dataType: 'json',
+      data: data,
+      beforeSend: function () {
+        $(button).prop('disabled', true).addClass('loading');
+      },
+      complete: function () {
+        $(button).prop('disabled', false).removeClass('loading');
+      },
+      success: function (json) {
+        if (json['error']) {
+          showAlert('danger', json['error']);
+        }
+        if (json['success']) {
+          showAlert('success', json['success']);
+        }
+      },
+      error: function (xhr, ajaxOptions, thrownError) {
+        showAlert('danger', thrownError);
+      }
+    });
+  }
+
+  const captureUrl = {{ capture_url|replace({'&amp;':'&'})|json_encode|raw }};
+  const refundUrl = {{ refund_url|replace({'&amp;':'&'})|json_encode|raw }};
+  const voidUrl = {{ void_url|replace({'&amp;':'&'})|json_encode|raw }};
+
+  $('#button-epay-capture').on('click', function () {
+    postAction(captureUrl, {
+      order_id: {{ order_id }},
+      amount: $('#input-epay-capture-amount').val(),
+      void_remaining: $('#input-epay-capture-void-remaining').is(':checked') ? 1 : 0
+    }, this);
+  });
+
+  $('#button-epay-refund').on('click', function () {
+    postAction(refundUrl, {
+      order_id: {{ order_id }},
+      amount: $('#input-epay-refund-amount').val()
+    }, this);
+  });
+
+  $('#button-epay-void').on('click', function () {
+    postAction(voidUrl, {
+      order_id: {{ order_id }}
+    }, this);
+  });
+})();
+//--></script>
