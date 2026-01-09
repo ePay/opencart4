@@ -7,8 +7,7 @@
   "extension": [
     {
       "type": "payment",
-      "code": "epay_epic",
-      "path": "extension/epay/"
+      "code": "epay"
     }
   ]
 }
